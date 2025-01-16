@@ -8,7 +8,7 @@ function Square({ value, onSquareClick }) {
   );
 }
 
-function Board({ xIsNext, squares, onPlay }) {
+function Board({ xIsNext, squares, onPlay, onRestart }) {
   function handleClick(i) {
     if (calculateWinner(squares) || squares[i]) {
       return;
@@ -23,9 +23,16 @@ function Board({ xIsNext, squares, onPlay }) {
   }
 
   const winner = calculateWinner(squares);
+  const isBoardFull = squares.every((square) => square !== null);
   let status;
+  let overlayMessage = null;
+
   if (winner) {
     status = "Winner: " + winner;
+    overlayMessage = "Winner: " + winner;
+  } else if (isBoardFull) {
+    status = "Draw!";
+    overlayMessage = "It's a Draw!";
   } else {
     status = "Next player: " + (xIsNext ? "X" : "O");
   }
@@ -48,6 +55,9 @@ function Board({ xIsNext, squares, onPlay }) {
         <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
         <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
       </div>
+      {overlayMessage && (
+        <Overlay message={overlayMessage} onRestart={onRestart} />
+      )}
     </>
   );
 }
@@ -68,13 +78,13 @@ export default function Game() {
     setCurrentMove(nextMove);
   }
 
+  function restartGame() {
+    setHistory([Array(9).fill(null)]);
+    setCurrentMove(0);
+  }
+
   const moves = history.map((squares, move) => {
-    let description;
-    if (move > 0) {
-      description = "Go to move #" + move;
-    } else {
-      description = "Go to game start";
-    }
+    const description = move > 0 ? `Go to move #${move}` : "Go to game start";
     return (
       <li key={move}>
         <button onClick={() => jumpTo(move)}>{description}</button>
@@ -85,7 +95,12 @@ export default function Game() {
   return (
     <div className="game">
       <div className="game-board">
-        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+        <Board
+          xIsNext={xIsNext}
+          squares={currentSquares}
+          onPlay={handlePlay}
+          onRestart={restartGame}
+        />
       </div>
       <div className="game-info">
         <ol>{moves}</ol>
@@ -112,4 +127,15 @@ function calculateWinner(squares) {
     }
   }
   return null;
+}
+
+function Overlay({ message, onRestart }) {
+  return (
+    <div className="overlay">
+      <div className="overlay-content">
+        <h1>{message}</h1>
+        <button onClick={onRestart}>RestartGame</button>
+      </div>
+    </div>
+  );
 }
